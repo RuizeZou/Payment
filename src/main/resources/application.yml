@@ -1,0 +1,50 @@
+spring:
+  application:
+    name: oj-backend
+
+  # DataSource Config
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/payment
+    username: root
+    password: 300318zrz
+  session:
+    timeout: 86400
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+
+  global-config:
+    db-config:
+      logic-delete-field: isDelete
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+# springdoc-openapi
+springdoc:
+  swagger-ui:
+    #???swagger??????,??http:localhost:8080/swagger-ui.html???????swagger??
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+  api-docs:
+    path: /v3/api-docs    #swagger??????
+    enabled: true   #????????
+  group-configs:
+    - group: 'default'   #????
+      paths-to-match: '/**'   #?????????,???/**
+      packages-to-scan: com.rzou.ojbackend    #?????????,?????????????
+
+# knife4j???????????????(??????)
+knife4j:
+  enable: true    #??knife4j,????@EnableKnife4j??
+  setting:
+    language: zh_cn   #??
+    swagger-model-name: ?????   #???SwaggerModel??,??
+  # production: true
