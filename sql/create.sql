@@ -13,4 +13,4 @@ CREATE TABLE payment_transaction (
     UNIQUE KEY uk_transaction_id (transaction_id),
     KEY idx_order_id (order_id),
     KEY idx_channel_transaction_id (channel_transaction_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='支付交易流水表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='支付交易表';

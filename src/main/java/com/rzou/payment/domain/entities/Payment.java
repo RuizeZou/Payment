@@ -20,7 +20,7 @@ public class Payment {
     private String orderId; // 关联的订单号
     private String channelTransactionId; // 支付渠道交易号
     private BigDecimal amount; // 交易金额
-    private String transactionType; // 交易类型（PAY/REFUND）
+    private TransactionTypeEnum transactionType; // 交易类型（PAY/REFUND）
     private PaymentStatusEnum transactionStatus; // 交易状态
     private String errorCode; // 错误码
     private String errorMsg; // 错误信息
@@ -40,7 +40,7 @@ public class Payment {
             return false;
         }
 
-        if (!TransactionTypeEnum.contains(transactionType)) {
+        if (!TransactionTypeEnum.contains(transactionType.getCode())) {
             return false;
         }
 
@@ -57,8 +57,8 @@ public class Payment {
         paymentVO.setOrderId(this.orderId);
         paymentVO.setChannelTransactionId(this.channelTransactionId);
         paymentVO.setAmount(this.amount);
-        paymentVO.setTransactionType(this.transactionType);
-        paymentVO.setStatus(this.transactionStatus.getCode());
+        paymentVO.setTransactionType(this.transactionType.getCode());
+        paymentVO.setTransactionStatus(this.transactionStatus.getCode());
         paymentVO.setErrorCode(this.errorCode);
         paymentVO.setErrorMsg(this.errorMsg);
         paymentVO.setCreateTime(Date.from(this.createTime.atZone(ZoneId.systemDefault()).toInstant()));
@@ -76,8 +76,8 @@ public class Payment {
         payment.setOrderId(paymentVO.getOrderId());
         payment.setChannelTransactionId(paymentVO.getChannelTransactionId());
         payment.setAmount(paymentVO.getAmount());
-        payment.setTransactionType(paymentVO.getTransactionType());
-        payment.setTransactionStatus(PaymentStatusEnum.fromCode(paymentVO.getStatus()));
+        payment.setTransactionType(TransactionTypeEnum.fromCode(paymentVO.getTransactionType()));
+        payment.setTransactionStatus(PaymentStatusEnum.fromCode(paymentVO.getTransactionStatus()));
         payment.setErrorCode(paymentVO.getErrorCode());
         payment.setErrorMsg(paymentVO.getErrorMsg());
         payment.setCreateTime(paymentVO.getCreateTime().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());
