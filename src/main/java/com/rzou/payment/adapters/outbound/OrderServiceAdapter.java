@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 public class OrderServiceAdapter implements OrderServiceApi {
 
     @Override
-    public Boolean updateOrderStatus(String orderId, int status) {
+    public Boolean updateOrderStatus(String orderId, int orderStatus) {
         return null;
     }
 

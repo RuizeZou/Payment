@@ -22,7 +22,7 @@ mybatis-plus:
       logic-not-delete-value: 0
 
 server:
-  port: 8080
+  port: 8082
   servlet:
     context-path: /api
 
@@ -48,3 +48,7 @@ knife4j:
     language: zh_cn   #??
     swagger-model-name: ?????   #???SwaggerModel??,??
   # production: true
+cloud:
+  nacos:
+    discovery:
+      enabled: false

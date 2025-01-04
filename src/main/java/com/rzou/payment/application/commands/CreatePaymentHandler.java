@@ -5,6 +5,7 @@ import com.rzou.payment.common.ErrorCode;
 import com.rzou.payment.common.ResultUtils;
 import com.rzou.payment.domain.entities.Payment;
 import com.rzou.payment.domain.enums.PaymentStatusEnum;
+import com.rzou.payment.domain.enums.TransactionTypeEnum;
 import com.rzou.payment.domain.events.PaymentCreateEvent;
 import com.rzou.payment.domain.valueobj.PaymentVO;
 import com.rzou.payment.ports.inbound.CreatePaymentUseCase;
@@ -14,6 +15,7 @@ import com.rzou.payment.ports.outbound.PaymentChannelApi;
 import com.rzou.payment.ports.outbound.PaymentRepositoryPort;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -29,6 +31,7 @@ public class CreatePaymentHandler implements CreatePaymentUseCase {
     private OrderServiceApi orderServiceApi;
     @Autowired
     private PaymentChannelApi paymentChannelApi;
+    @Qualifier("eventPublisherImpl")
     @Autowired
     private EventPublisherPort eventPublisherPort;
 
@@ -38,7 +41,7 @@ public class CreatePaymentHandler implements CreatePaymentUseCase {
         PaymentVO paymentVO = new PaymentVO();
         paymentVO.setOrderId(createPaymentCommand.getOrderId());
         paymentVO.setAmount(createPaymentCommand.getAmount());
-        paymentVO.setTransactionType("PAY");
+        paymentVO.setTransactionType(TransactionTypeEnum.PAY.getCode());
 
         // 2. 创建支付实体
         Payment payment = Payment.fromVO(paymentVO);
@@ -56,13 +59,7 @@ public class CreatePaymentHandler implements CreatePaymentUseCase {
             return ResultUtils.error(ErrorCode.SYSTEM_ERROR, "Payment already exists for this order");
         }
 
-        // 5. 检查订单状态
-        BaseResponse<Boolean> orderRes = orderServiceApi.checkOrderStatus(payment.getOrderId());
-        if (orderRes.getCode() != 0 || !orderRes.getData()) {
-            return ResultUtils.error(ErrorCode.SYSTEM_ERROR, "Invalid order status");
-        }
-
-        // 6. 调用支付渠道处理支付
+        // 5. 调用支付渠道处理支付
         BaseResponse<String> channelRes = paymentChannelApi.processPayment(
                 payment.getTransactionId(),
                 payment.getOrderId(),
@@ -74,20 +71,22 @@ public class CreatePaymentHandler implements CreatePaymentUseCase {
             payment.setErrorCode(String.valueOf(channelRes.getCode()));
             payment.setErrorMsg(channelRes.getDescription());
             paymentRepositoryPort.save(payment);
+            orderServiceApi.updateOrderStatus(payment.getOrderId(), 2);
             return ResultUtils.error(ErrorCode.SYSTEM_ERROR, "Payment channel processing failed");
         }
 
-        // 7. 保存支付记录
+        // 6. 保存支付记录
         payment.setTransactionStatus(PaymentStatusEnum.SUCCESS); // 支付成功
         payment.setChannelTransactionId(channelRes.getData());
         boolean saveRes = paymentRepositoryPort.save(payment);
+        orderServiceApi.updateOrderStatus(payment.getOrderId(), 1);
         if (!saveRes) {
             // 如果保存失败，需要调用支付渠道的撤销接口
             paymentChannelApi.cancelPayment(payment.getTransactionId(), channelRes.getData());
             return ResultUtils.error(ErrorCode.SYSTEM_ERROR, "Save payment record failed");
         }
 
-        // 8. 发布支付成功事件
+        // 7. 发布支付成功事件
         PaymentCreateEvent paymentCreateEvent = new PaymentCreateEvent(
                 payment.getTransactionId(),
                 payment.getOrderId(),

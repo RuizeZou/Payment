@@ -20,7 +20,7 @@ public class GetPaymentStatusHandler implements GetPaymentStatusUseCase {
     @Override
     public BaseResponse<Integer> getPaymentStatus(String paymentId) {
         Optional<Payment> payment = paymentRepositoryPort.findById(paymentId);
-        if (payment.isEmpty()) {
+        if (!payment.isPresent()) {
             return ResultUtils.error(ErrorCode.SYSTEM_ERROR, "Payment not found");
         }
         return ResultUtils.success(payment.get().getTransactionStatus().getCode());

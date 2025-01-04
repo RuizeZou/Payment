@@ -31,7 +31,7 @@ public enum TransactionTypeEnum {
 
     public static TransactionTypeEnum fromCode(String code) {
         for (TransactionTypeEnum type : TransactionTypeEnum.values()) {
-            if (type.getCode().equals(code)) {
+            if (type.getCode().equals(code) || type.name().equals(code)) {
                 return type;
             }
         }
