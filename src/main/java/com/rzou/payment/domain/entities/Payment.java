@@ -16,9 +16,9 @@ import java.util.Date;
 @Data
 public class Payment {
     private Long id; // 数据库自增主键
-    private String transactionNo; // 交易流水号
-    private String orderNo; // 关联的订单号
-    private String channelTransactionNo; // 支付渠道交易号
+    private String transactionId; // 交易流水号
+    private String orderId; // 关联的订单号
+    private String channelTransactionId; // 支付渠道交易号
     private BigDecimal amount; // 交易金额
     private String transactionType; // 交易类型（PAY/REFUND）
     private PaymentStatusEnum transactionStatus; // 交易状态
@@ -31,7 +31,7 @@ public class Payment {
      * 验证支付信息是否有效
      */
     public boolean isValid() {
-        if (transactionNo == null || orderNo == null || amount == null
+        if (transactionId == null || orderId == null || amount == null
                 || transactionType == null || transactionStatus == null) {
             return false;
         }
@@ -53,12 +53,12 @@ public class Payment {
     public PaymentVO toVO() {
         PaymentVO paymentVO = new PaymentVO();
         paymentVO.setId(this.id);
-        paymentVO.setTransactionNo(this.transactionNo);
-        paymentVO.setOrderNo(this.orderNo);
-        paymentVO.setChannelTransactionNo(this.channelTransactionNo);
+        paymentVO.setTransactionId(this.transactionId);
+        paymentVO.setOrderId(this.orderId);
+        paymentVO.setChannelTransactionId(this.channelTransactionId);
         paymentVO.setAmount(this.amount);
         paymentVO.setTransactionType(this.transactionType);
-        paymentVO.setTransactionStatus(this.transactionStatus.name());
+        paymentVO.setStatus(this.transactionStatus.getCode());
         paymentVO.setErrorCode(this.errorCode);
         paymentVO.setErrorMsg(this.errorMsg);
         paymentVO.setCreateTime(Date.from(this.createTime.atZone(ZoneId.systemDefault()).toInstant()));
@@ -72,12 +72,12 @@ public class Payment {
     public static Payment fromVO(PaymentVO paymentVO) {
         Payment payment = new Payment();
         payment.setId(paymentVO.getId());
-        payment.setTransactionNo(paymentVO.getTransactionNo());
-        payment.setOrderNo(paymentVO.getOrderNo());
-        payment.setChannelTransactionNo(paymentVO.getChannelTransactionNo());
+        payment.setTransactionId(paymentVO.getTransactionId());
+        payment.setOrderId(paymentVO.getOrderId());
+        payment.setChannelTransactionId(paymentVO.getChannelTransactionId());
         payment.setAmount(paymentVO.getAmount());
         payment.setTransactionType(paymentVO.getTransactionType());
-        payment.setTransactionStatus(PaymentStatusEnum.valueOf(paymentVO.getTransactionStatus()));
+        payment.setTransactionStatus(PaymentStatusEnum.fromCode(paymentVO.getStatus()));
         payment.setErrorCode(paymentVO.getErrorCode());
         payment.setErrorMsg(paymentVO.getErrorMsg());
         payment.setCreateTime(paymentVO.getCreateTime().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime());

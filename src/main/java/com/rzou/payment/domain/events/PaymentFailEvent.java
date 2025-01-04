@@ -1,4 +1,4 @@
 package com.rzou.payment.domain.events;
 
-public class PaymentFailedEvent {
+public class PaymentFailEvent {
 }

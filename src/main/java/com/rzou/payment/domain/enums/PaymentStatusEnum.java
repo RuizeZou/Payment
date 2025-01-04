@@ -6,7 +6,8 @@ import lombok.Getter;
 public enum PaymentStatusEnum {
     SUCCESS(0, "success"),
     FAILED(1, "failed"),
-    REFUNDED(2, "refunded");
+    REFUNDED(2, "refunded"),
+    PENDING(3, "pending");
 
     private final int code;
     private final String description;

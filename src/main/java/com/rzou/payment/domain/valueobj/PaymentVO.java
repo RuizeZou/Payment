@@ -25,17 +25,17 @@ public class PaymentVO implements Serializable {
     /**
      * 交易流水号
      */
-    private String transactionNo;
+    private String transactionId;
 
     /**
      * 支付订单号
      */
-    private String orderNo;
+    private String orderId;
 
     /**
      * 渠道交易号
      */
-    private String channelTransactionNo;
+    private String channelTransactionId;
 
     /**
      * 交易金额
@@ -50,7 +50,7 @@ public class PaymentVO implements Serializable {
     /**
      * 交易状态(SUCCESS/FAILED)
      */
-    private String transactionStatus;
+    private int transactionStatus;
 
     /**
      * 错误码
@@ -88,12 +88,12 @@ public class PaymentVO implements Serializable {
         }
         PaymentVO other = (PaymentVO) that;
         return (this.getId() == null ? other.getId() == null : this.getId().equals(other.getId()))
-            && (this.getTransactionNo() == null ? other.getTransactionNo() == null : this.getTransactionNo().equals(other.getTransactionNo()))
-            && (this.getOrderNo() == null ? other.getOrderNo() == null : this.getOrderNo().equals(other.getOrderNo()))
-            && (this.getChannelTransactionNo() == null ? other.getChannelTransactionNo() == null : this.getChannelTransactionNo().equals(other.getChannelTransactionNo()))
+            && (this.getTransactionId() == null ? other.getTransactionId() == null : this.getTransactionId().equals(other.getTransactionId()))
+            && (this.getOrderId() == null ? other.getOrderId() == null : this.getOrderId().equals(other.getOrderId()))
+            && (this.getChannelTransactionId() == null ? other.getChannelTransactionId() == null : this.getChannelTransactionId().equals(other.getChannelTransactionId()))
             && (this.getAmount() == null ? other.getAmount() == null : this.getAmount().equals(other.getAmount()))
             && (this.getTransactionType() == null ? other.getTransactionType() == null : this.getTransactionType().equals(other.getTransactionType()))
-            && (this.getTransactionStatus() == null ? other.getTransactionStatus() == null : this.getTransactionStatus().equals(other.getTransactionStatus()))
+            && (this.getTransactionStatus() == other.getTransactionStatus())
             && (this.getErrorCode() == null ? other.getErrorCode() == null : this.getErrorCode().equals(other.getErrorCode()))
             && (this.getErrorMsg() == null ? other.getErrorMsg() == null : this.getErrorMsg().equals(other.getErrorMsg()))
             && (this.getCreateTime() == null ? other.getCreateTime() == null : this.getCreateTime().equals(other.getCreateTime()))
@@ -105,12 +105,12 @@ public class PaymentVO implements Serializable {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((getId() == null) ? 0 : getId().hashCode());
-        result = prime * result + ((getTransactionNo() == null) ? 0 : getTransactionNo().hashCode());
-        result = prime * result + ((getOrderNo() == null) ? 0 : getOrderNo().hashCode());
-        result = prime * result + ((getChannelTransactionNo() == null) ? 0 : getChannelTransactionNo().hashCode());
+        result = prime * result + ((getTransactionId() == null) ? 0 : getTransactionId().hashCode());
+        result = prime * result + ((getOrderId() == null) ? 0 : getOrderId().hashCode());
+        result = prime * result + ((getChannelTransactionId() == null) ? 0 : getChannelTransactionId().hashCode());
         result = prime * result + ((getAmount() == null) ? 0 : getAmount().hashCode());
         result = prime * result + ((getTransactionType() == null) ? 0 : getTransactionType().hashCode());
-        result = prime * result + ((getTransactionStatus() == null) ? 0 : getTransactionStatus().hashCode());
+        result = prime * result + transactionStatus;
         result = prime * result + ((getErrorCode() == null) ? 0 : getErrorCode().hashCode());
         result = prime * result + ((getErrorMsg() == null) ? 0 : getErrorMsg().hashCode());
         result = prime * result + ((getCreateTime() == null) ? 0 : getCreateTime().hashCode());
@@ -125,12 +125,12 @@ public class PaymentVO implements Serializable {
         sb.append(" [");
         sb.append("Hash = ").append(hashCode());
         sb.append(", id=").append(id);
-        sb.append(", transactionNo=").append(transactionNo);
-        sb.append(", orderNo=").append(orderNo);
-        sb.append(", channelTransactionNo=").append(channelTransactionNo);
+        sb.append(", transactionNo=").append(transactionId);
+        sb.append(", orderNo=").append(orderId);
+        sb.append(", channelTransactionNo=").append(channelTransactionId);
         sb.append(", amount=").append(amount);
         sb.append(", transactionType=").append(transactionType);
-        sb.append(", transactionStatus=").append(transactionStatus);
+        sb.append(", status=").append(transactionStatus);
         sb.append(", errorCode=").append(errorCode);
         sb.append(", errorMsg=").append(errorMsg);
         sb.append(", createTime=").append(createTime);

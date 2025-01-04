@@ -6,12 +6,12 @@
 
     <resultMap id="BaseResultMap" type="com.rzou.payment.domain.valueobj.PaymentVO">
             <id property="id" column="id" jdbcType="BIGINT"/>
-            <result property="transactionNo" column="transaction_no" jdbcType="VARCHAR"/>
-            <result property="orderNo" column="order_no" jdbcType="VARCHAR"/>
-            <result property="channelTransactionNo" column="channel_transaction_no" jdbcType="VARCHAR"/>
+            <result property="transactionId" column="transaction_id" jdbcType="VARCHAR"/>
+            <result property="orderId" column="order_id" jdbcType="VARCHAR"/>
+            <result property="channelTransactionId" column="channel_transaction_id" jdbcType="VARCHAR"/>
             <result property="amount" column="amount" jdbcType="DECIMAL"/>
             <result property="transactionType" column="transaction_type" jdbcType="VARCHAR"/>
-            <result property="transactionStatus" column="transaction_status" jdbcType="VARCHAR"/>
+            <result property="transactionStatus" column="transaction_status" jdbcType="TINYINT"/>
             <result property="errorCode" column="error_code" jdbcType="VARCHAR"/>
             <result property="errorMsg" column="error_msg" jdbcType="VARCHAR"/>
             <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
@@ -19,8 +19,8 @@
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,transaction_no,order_no,
-        channel_transaction_no,amount,transaction_type,
+        id,transaction_id,order_id,
+        channel_transaction_id,amount,transaction_type,
         transaction_status,error_code,error_msg,
         create_time,update_time
     </sql>

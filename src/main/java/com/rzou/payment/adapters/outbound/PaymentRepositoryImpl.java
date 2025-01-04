@@ -19,30 +19,31 @@ public class PaymentRepositoryImpl implements PaymentRepositoryPort {
     }
 
     @Override
-    public void save(Payment payment) {
+    public boolean save(Payment payment) {
         paymentMapper.insert(payment.toVO());
+        return true;
     }
 
     @Override
-    public Optional<Payment> findById(Long id) {
+    public Optional<Payment> findById(String transactionId) {
         QueryWrapper<PaymentVO> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("id", id);
+        queryWrapper.eq("transaction_id", transactionId);
         return Optional.ofNullable(paymentMapper.selectOne(queryWrapper))
                 .map(Payment::fromVO);
     }
 
     @Override
-    public Optional<Payment> findByTransactionNo(String transactionNo) {
+    public Optional<Payment> findByOrderId(String orderId) {
         QueryWrapper<PaymentVO> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("transaction_no", transactionNo);
+        queryWrapper.eq("order_id", orderId);
         return Optional.ofNullable(paymentMapper.selectOne(queryWrapper))
                 .map(Payment::fromVO);
     }
 
     @Override
-    public void deleteById(Long id) {
+    public void deleteById(String transactionId) {
         QueryWrapper<PaymentVO> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("id", id);
+        queryWrapper.eq("id", transactionId);
         paymentMapper.delete(queryWrapper);
     }
 
