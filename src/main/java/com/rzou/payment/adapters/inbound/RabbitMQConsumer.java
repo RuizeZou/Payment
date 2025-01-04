@@ -4,6 +4,7 @@ import com.alibaba.nacos.shaded.com.google.gson.Gson;
 import com.rzou.payment.application.queries.UpdatePaymentStatusCommand;
 import com.rzou.payment.infrastructure.RabbitMQConfig;
 import com.rzou.payment.ports.inbound.UpdatePaymentStatusUseCase;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 

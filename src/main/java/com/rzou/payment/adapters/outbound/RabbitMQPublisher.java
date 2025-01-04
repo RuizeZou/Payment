@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.rzou.payment.domain.events.PaymentCreateEvent;
 import com.rzou.payment.infrastructure.RabbitMQConfig;
 import com.rzou.payment.ports.outbound.EventPublisherPort;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 
