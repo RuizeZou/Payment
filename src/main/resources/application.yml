@@ -52,3 +52,18 @@ cloud:
   nacos:
     discovery:
       enabled: false
+
+alipay:
+  app-id: your-app-id
+  merchant-private-key: your-merchant-private-key
+  alipay-public-key: alipay-public-key
+  notify-url: ${server.address:http://localhost}:${server.port}${server.servlet.context-path}/webhook/payment-status
+  return-url: ${server.address:http://localhost}:${server.port}${server.servlet.context-path}/payment/return
+  gateway-url: https://openapi.alipaydev.com/gateway.do
+
+wechat:
+  merchant-id: your-merchant-id
+  merchant-serial-number: your-serial-number
+  merchant-private-key: your-private-key
+  api-v3-key: your-api-v3-key
+  notify-url: ${server.address:http://localhost}:${server.port}${server.servlet.context-path}/webhook/wechat/payment-status

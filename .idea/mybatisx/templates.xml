@@ -69,8 +69,8 @@
             <option name="tableUIInfoList">
               <list>
                 <TableUIInfo>
-                  <option name="className" value="Payment" />
-                  <option name="tableName" value="payment" />
+                  <option name="className" value="StockTransactions" />
+                  <option name="tableName" value="stock_transactions" />
                 </TableUIInfo>
               </list>
             </option>
