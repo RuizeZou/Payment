@@ -1,4 +1,4 @@
-package com.rzou.payment.application.queries;
+package com.rzou.payment.application.commands;
 
 import com.rzou.payment.domain.enums.PaymentStatusEnum;
 import lombok.Data;

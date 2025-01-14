@@ -1,6 +1,6 @@
 package com.rzou.payment.adapters.inbound;
 
-import com.rzou.payment.application.queries.UpdatePaymentStatusCommand;
+import com.rzou.payment.application.commands.UpdatePaymentStatusCommand;
 import com.rzou.payment.common.BaseResponse;
 import com.rzou.payment.ports.inbound.UpdatePaymentStatusUseCase;
 import org.springframework.beans.factory.annotation.Autowired;

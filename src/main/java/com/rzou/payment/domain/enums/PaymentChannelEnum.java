@@ -1,9 +1,10 @@
 package com.rzou.payment.domain.enums;
 
 public enum PaymentChannelEnum {
-    ALIPAY("1", "支付宝"),
-    WECHAT("2", "微信支付"),
-    UNION_PAY("3", "银联支付");
+    ALIPAY("0", "alipay"),
+    WECHAT("1", "wechat"),
+    STRIPE("2", "stripe"),
+    PAYPAL("3", "paypal");
 
     private final String code;
     private final String description;

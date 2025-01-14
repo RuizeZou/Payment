@@ -1,8 +1,5 @@
-package com.rzou.payment.application.queries;
+package com.rzou.payment.application.commands;
 
-import com.rzou.payment.common.BaseResponse;
-import com.rzou.payment.common.ErrorCode;
-import com.rzou.payment.common.ResultUtils;
 import com.rzou.payment.domain.entities.Payment;
 import com.rzou.payment.domain.enums.PaymentStatusEnum;
 import com.rzou.payment.ports.inbound.UpdatePaymentStatusUseCase;
@@ -10,9 +7,7 @@ import com.rzou.payment.ports.outbound.PaymentRepositoryPort;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
-import java.util.Date;
 import java.util.Optional;
 
 @Slf4j
