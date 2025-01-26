@@ -1,4 +1,4 @@
-CREATE TABLE payment_transaction (
+CREATE TABLE payment (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     transaction_id VARCHAR(32) NOT NULL COMMENT '交易流水号',
     order_id VARCHAR(32) NOT NULL COMMENT '支付订单号',

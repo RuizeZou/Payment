@@ -1,15 +1,22 @@
 spring:
   application:
-    name: oj-backend
+    name: payment
 
   # DataSource Config
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/payment
     username: root
-    password: 300318zrz
+    password:
   session:
     timeout: 86400
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    virtual-host: /
 
 mybatis-plus:
   configuration:
@@ -22,7 +29,7 @@ mybatis-plus:
       logic-not-delete-value: 0
 
 server:
-  port: 8082
+  port: 8080
   servlet:
     context-path: /api
 
@@ -39,7 +46,7 @@ springdoc:
   group-configs:
     - group: 'default'   #????
       paths-to-match: '/**'   #?????????,???/**
-      packages-to-scan: com.rzou.ojbackend    #?????????,?????????????
+      packages-to-scan: com.rzou.payment    #?????????,?????????????
 
 # knife4j???????????????(??????)
 knife4j:
@@ -60,10 +67,3 @@ alipay:
   notify-url: ${server.address:http://localhost}:${server.port}${server.servlet.context-path}/webhook/payment-status
   return-url: ${server.address:http://localhost}:${server.port}${server.servlet.context-path}/payment/return
   gateway-url: https://openapi.alipaydev.com/gateway.do
-
-wechat:
-  merchant-id: your-merchant-id
-  merchant-serial-number: your-serial-number
-  merchant-private-key: your-private-key
-  api-v3-key: your-api-v3-key
-  notify-url: ${server.address:http://localhost}:${server.port}${server.servlet.context-path}/webhook/wechat/payment-status

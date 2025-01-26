@@ -23,5 +23,6 @@ public class PaymentWebhookController {
     public BaseResponse<Boolean> handlePaymentStatusUpdate(@RequestBody UpdatePaymentStatusCommand command) {
         boolean result = updatePaymentStatusUseCase.updatePaymentStatus(command);
         return new BaseResponse<>(0, result, "Success");
+        //这个就是支付宝回调的地址，然后我会根据支付宝返回的结果来决定调用哪个结果handler
     }
 }
