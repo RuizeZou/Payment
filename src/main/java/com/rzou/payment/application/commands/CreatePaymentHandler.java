@@ -66,6 +66,8 @@ public class CreatePaymentHandler implements CreatePaymentUseCase {
                 payment.getAmount()
         );
 
+        //到这里就停止，然后return也不是baseresponse，应该是一个什么boolean返回给mqconsumer，再ack消息队列
+
         if (channelRes.getCode() != 0) {
             payment.setTransactionStatus(PaymentStatusEnum.FAILED); // 支付失败
             payment.setErrorCode(String.valueOf(channelRes.getCode()));
