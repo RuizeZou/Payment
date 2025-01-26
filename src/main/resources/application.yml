@@ -67,3 +67,5 @@ alipay:
   notify-url: ${server.address:http://localhost}:${server.port}${server.servlet.context-path}/webhook/payment-status
   return-url: ${server.address:http://localhost}:${server.port}${server.servlet.context-path}/payment/return
   gateway-url: https://openapi.alipaydev.com/gateway.do
+  charset: UTF-8
+  sign-type: RSA2
