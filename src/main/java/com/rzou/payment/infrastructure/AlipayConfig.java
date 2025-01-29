@@ -7,36 +7,41 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
+
 public class AlipayConfig {
 
     @Value("${alipay.app-id}")
     private String appId;
 
-    @Value("${alipay.merchant-private-key}")
-    private String merchantPrivateKey;
+    @Value("${alipay.private-key}")
+    private String privateKey;
 
-    @Value("${alipay.alipay-public-key}")
-    private String alipayPublicKey;
+    @Value("${alipay.public-key}")
+    private String publicKey;
+
+    @Value("${alipay.gateway-url}")
+    private String gatewayUrl;
 
     @Value("${alipay.notify-url}")
     private String notifyUrl;
-
-    @Value("${alipay.return-url}")
-    private String returnUrl;
-
-    @Value("${alipay.gateway-url:https://openapi.alipaydev.com/gateway.do}")
-    private String gatewayUrl;
 
     @Bean
     public AlipayClient alipayClient() {
         return new DefaultAlipayClient(
                 gatewayUrl,
                 appId,
-                merchantPrivateKey,
-                "json",
-                "UTF-8",
-                alipayPublicKey,
-                "RSA2"
+                privateKey,
+                "json",       // 固定值
+                "UTF-8",      // 固定值
+                publicKey,
+                "RSA2"        // 签名方式
         );
+    }
+
+    public String getNotifyUrl() {
+        return notifyUrl;
+    }
+    public String getPrivateKey() {
+        return privateKey;
     }
 }

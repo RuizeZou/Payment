@@ -1,164 +1,91 @@
 package com.rzou.payment.adapters.outbound;
 
+import com.alibaba.fastjson.JSONObject;
+
+import com.alipay.api.AlipayApiException;
 import com.alipay.api.AlipayClient;
 import com.alipay.api.request.*;
 import com.alipay.api.response.*;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.rzou.payment.common.BaseResponse;
 import com.rzou.payment.common.ErrorCode;
+import com.rzou.payment.infrastructure.AlipayConfig;
 import com.rzou.payment.ports.outbound.PaymentChannelApi;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 @Slf4j
 @Service
 public class AlipayChannelImpl implements PaymentChannelApi {
 
-    private final AlipayClient alipayClient;
-
-    public AlipayChannelImpl(AlipayClient alipayClient) {
-        this.alipayClient = alipayClient;
-    }
+    @Autowired
+    private AlipayClient alipayClient;
+    @Autowired
+    private AlipayConfig alipayConfig;
 
     @Override
-    public BaseResponse<String> processPayment(String transactionId, String orderId, BigDecimal amount) {
-        try {
-            AlipayTradePagePayRequest request = new AlipayTradePagePayRequest();
-            request.setBizContent("{" +
-                    "\"out_trade_no\":\"" + transactionId + "\"," +
-                    "\"product_code\":\"FAST_INSTANT_TRADE_PAY\"," +
-                    "\"total_amount\":\"" + amount + "\"," +
-                    "\"subject\":\"订单" + orderId + "的支付\"" +
-                    "}");
+    public String processPayment(String orderNo, BigDecimal amount, String subject) {
+        AlipayTradePagePayRequest request = new AlipayTradePagePayRequest();
 
-            AlipayTradePagePayResponse response = alipayClient.pageExecute(request);
+        request.setNotifyUrl(alipayConfig.getNotifyUrl());
+
+        // 使用 Gson 构建业务参数
+        JsonObject bizContent = new JsonObject();
+        bizContent.addProperty("out_trade_no", orderNo);
+        bizContent.addProperty("total_amount", amount.setScale(2, RoundingMode.HALF_UP).toString());
+        bizContent.addProperty("subject", subject);
+        bizContent.addProperty("product_code", "FAST_INSTANT_TRADE_PAY");
+
+        request.setBizContent(new Gson().toJson(bizContent));
+
+        try {
+            AlipayTradePagePayResponse response = alipayClient.pageExecute(request, "GET");
+            JsonObject result = new JsonObject();
+            result.addProperty("code", response.getCode());
             if (response.isSuccess()) {
-                return new BaseResponse<>(0, response.getBody(), "Success");
+                result.addProperty("data", response.getBody());
             } else {
-                log.error("支付宝支付失败: {}, {}", response.getCode(), response.getMsg());
-                return new BaseResponse<>(ErrorCode.SYSTEM_ERROR.getCode(), null,
-                        response.getMsg(), response.getSubMsg());
+                result.addProperty("error", response.getSubMsg());
             }
-        } catch (Exception e) {
-            log.error("调用支付宝支付接口异常", e);
-            return new BaseResponse<>(ErrorCode.SYSTEM_ERROR.getCode(), null,
-                    "支付接口调用失败", e.getMessage());
+            return new Gson().toJson(result);
+
+        } catch (AlipayApiException e) {
+            throw new RuntimeException("支付请求失败", e);
         }
     }
 
     @Override
-    public BaseResponse<Boolean> queryPaymentStatus(String transactionId, String channelTransactionId) {
+    public String cancelPayment(String orderNo) {
+        AlipayTradeCloseRequest request = new AlipayTradeCloseRequest();
+
+        // 构建业务参数
+        JsonObject bizContent = new JsonObject();
+        bizContent.addProperty("out_trade_no", orderNo);  // 使用商户订单号
+
+        request.setBizContent(new Gson().toJson(bizContent));
+
         try {
-            AlipayTradeQueryRequest request = new AlipayTradeQueryRequest();
-            request.setBizContent("{" +
-                    "\"out_trade_no\":\"" + transactionId + "\"," +
-                    "\"trade_no\":\"" + channelTransactionId + "\"" +
-                    "}");
-
-            AlipayTradeQueryResponse response = alipayClient.execute(request);
-            if (response.isSuccess()) {
-                boolean isPaid = "TRADE_SUCCESS".equals(response.getTradeStatus()) ||
-                        "TRADE_FINISHED".equals(response.getTradeStatus());
-                return new BaseResponse<>(0, isPaid, "Success");
-            } else {
-                log.error("查询支付宝订单状态失败: {}, {}", response.getCode(), response.getMsg());
-                return new BaseResponse<>(ErrorCode.SYSTEM_ERROR.getCode(), false,
-                        response.getMsg(), response.getSubMsg());
-            }
-        } catch (Exception e) {
-            log.error("调用支付宝查询接口异常", e);
-            return new BaseResponse<>(ErrorCode.SYSTEM_ERROR.getCode(), false,
-                    "查询接口调用失败", e.getMessage());
-        }
-    }
-
-    @Override
-    public BaseResponse<Boolean> cancelPayment(String transactionId, String channelTransactionId) {
-        try {
-            AlipayTradeCloseRequest request = new AlipayTradeCloseRequest();
-            request.setBizContent("{" +
-                    "\"out_trade_no\":\"" + transactionId + "\"," +
-                    "\"trade_no\":\"" + channelTransactionId + "\"" +
-                    "}");
-
             AlipayTradeCloseResponse response = alipayClient.execute(request);
+
+            JsonObject result = new JsonObject();
+            result.addProperty("code", response.getCode());
+
             if (response.isSuccess()) {
-                return new BaseResponse<>(0, true, "Success");
+                // 关单成功返回支付宝交易号
+                result.addProperty("trade_no", response.getTradeNo());
             } else {
-                log.error("取消支付宝订单失败: {}, {}", response.getCode(), response.getMsg());
-                return new BaseResponse<>(ErrorCode.SYSTEM_ERROR.getCode(), false,
-                        response.getMsg(), response.getSubMsg());
+                // 获取支付宝返回的错误信息
+                result.addProperty("error", response.getSubMsg());
             }
-        } catch (Exception e) {
-            log.error("调用支付宝取消接口异常", e);
-            return new BaseResponse<>(ErrorCode.SYSTEM_ERROR.getCode(), false,
-                    "取消接口调用失败", e.getMessage());
-        }
-    }
+            return new Gson().toJson(result);
 
-    @Override
-    public BaseResponse<String> processRefund(String originalTransactionId,
-                                              String refundTransactionId,
-                                              BigDecimal amount) {
-        try {
-            AlipayTradeRefundRequest request = new AlipayTradeRefundRequest();
-            request.setBizContent("{" +
-                    "\"out_trade_no\":\"" + originalTransactionId + "\"," +
-                    "\"out_request_no\":\"" + refundTransactionId + "\"," +
-                    "\"refund_amount\":\"" + amount + "\"" +
-                    "}");
-
-            AlipayTradeRefundResponse response = alipayClient.execute(request);
-            if (response.isSuccess()) {
-                return new BaseResponse<>(0, response.getTradeNo(), "Success");
-            } else {
-                log.error("申请支付宝退款失败: {}, {}", response.getCode(), response.getMsg());
-                return new BaseResponse<>(ErrorCode.SYSTEM_ERROR.getCode(), null,
-                        response.getMsg(), response.getSubMsg());
-            }
-        } catch (Exception e) {
-            log.error("调用支付宝退款接口异常", e);
-            return new BaseResponse<>(ErrorCode.SYSTEM_ERROR.getCode(), null,
-                    "退款接口调用失败", e.getMessage());
-        }
-    }
-
-    @Override
-    public BaseResponse<Boolean> queryRefundStatus(String refundTransactionId,
-                                                   String channelRefundTransactionId) {
-        try {
-            AlipayTradeFastpayRefundQueryRequest request = new AlipayTradeFastpayRefundQueryRequest();
-            request.setBizContent("{" +
-                    "\"out_request_no\":\"" + refundTransactionId + "\"," +
-                    "\"trade_no\":\"" + channelRefundTransactionId + "\"" +
-                    "}");
-
-            AlipayTradeFastpayRefundQueryResponse response = alipayClient.execute(request);
-            if (response.isSuccess()) {
-                return new BaseResponse<>(0, true, "Success");
-            } else {
-                log.error("查询支付宝退款状态失败: {}, {}", response.getCode(), response.getMsg());
-                return new BaseResponse<>(ErrorCode.SYSTEM_ERROR.getCode(), false,
-                        response.getMsg(), response.getSubMsg());
-            }
-        } catch (Exception e) {
-            log.error("调用支付宝退款查询接口异常", e);
-            return new BaseResponse<>(ErrorCode.SYSTEM_ERROR.getCode(), false,
-                    "退款查询接口调用失败", e.getMessage());
-        }
-    }
-
-    @Override
-    public BaseResponse<Boolean> validateChannelConnection() {
-        try {
-            AlipaySystemOauthTokenRequest request = new AlipaySystemOauthTokenRequest();
-            AlipaySystemOauthTokenResponse response = alipayClient.execute(request);
-            return new BaseResponse<>(0, response.isSuccess(), "Success");
-        } catch (Exception e) {
-            log.error("验证支付宝连接失败", e);
-            return new BaseResponse<>(ErrorCode.SYSTEM_ERROR.getCode(), false,
-                    "连接验证失败", e.getMessage());
+        } catch (AlipayApiException e) {
+            throw new RuntimeException("取消支付失败", e);
         }
     }
 }

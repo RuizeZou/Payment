@@ -31,7 +31,7 @@ public class CreatePaymentHandler implements CreatePaymentUseCase {
     private OrderServiceApi orderServiceApi;
     @Autowired
     private PaymentChannelApi paymentChannelApi;
-    @Qualifier("eventPublisherImpl")
+    @Qualifier("eventPublisherImpl")//这个不需要qualifier吧，publisher只有一个实现吧
 
     @Override
     public Boolean createPayment(CreatePaymentCommand createPaymentCommand) {
@@ -58,40 +58,40 @@ public class CreatePaymentHandler implements CreatePaymentUseCase {
                 log.warn("Payment record already exists for order: {}", payment.getOrderId());
                 return false;
             }
-
-            // 5. 调用支付渠道处理支付
-            BaseResponse<String> channelResponse = paymentChannelApi.processPayment(
-                    payment.getTransactionId(),
-                    payment.getOrderId(),
-                    payment.getAmount()
-            );
-
-            ChannelProcessResponse channelRes = gson.fromJson(channelResponse.getData(), ChannelProcessResponse.class);
-
-            // 检查支付宝返回结果
-            if (!channelRes.isSuccess()) {
-                log.error("支付宝处理支付失败: code={}, msg={}, subCode={}, subMsg={}",
-                        channelRes.getCode(),
-                        channelRes.getMsg(),
-                        channelRes.getSubCode(),
-                        channelRes.getSubMsg());
+            String channelResponse;
+            // 5. 调用支付渠道创建支付链接
+            try{
+                channelResponse = paymentChannelApi.processPayment(
+                        payment.getOrderId(),
+                        payment.getAmount()
+                        , ""
+                );
+            }
+            catch (Exception e){
+                log.error("调用支付渠道失败", e);
                 return false;
             }
 
+            // 解析支付渠道返回的支付链接
+            ChannelProcessResponse channelRes = gson.fromJson(channelResponse, ChannelProcessResponse.class);
             // 设置支付宝返回的交易信息
-            payment.setChannelTransactionId(channelRes.getTradeNo());
+            if(!channelRes.isSuccess()){
+                log.error("创建支付链接失败: {}", channelRes.getMsg());
+                return false;
+            }
 
             // 6. 保存支付记录，通过Dubbo发送支付链接到订单服务
             boolean saveRes = paymentRepositoryPort.save(payment);
             if (!saveRes) {
                 // 保存失败时调用支付渠道的撤销接口
-                BaseResponse<Boolean> cancelRes = paymentChannelApi.cancelPayment(
-                        payment.getTransactionId(),
-                        channelRes.getTradeNo()
+                String cancelRes = paymentChannelApi.cancelPayment(
+                        payment.getOrderId()
                 );
-                if (!cancelRes.getData()) {
-                    log.error("取消支付失败: {}", payment.getTransactionId());
+                ChannelProcessResponse res = gson.fromJson(cancelRes, ChannelProcessResponse.class);
+                if (!res.isSuccess()) {
+                    log.error("取消支付失败: {}", payment.getOrderId());
                 }
+                payment.setTransactionId(res.getTradeNo());
                 log.error("保存支付记录失败: {}", payment.getOrderId());
                 return false;
             }
@@ -103,6 +103,7 @@ public class CreatePaymentHandler implements CreatePaymentUseCase {
             if (updateRes == null || !updateRes) {
                 log.error("更新订单支付链接失败: {}", payment.getOrderId());
                 return false;
+                //这一步是否也要cancel掉支付
             }
 
             // 返回true表示处理成功,MQ Consumer可以ACK消息

@@ -1,5 +1,7 @@
 package com.rzou.payment.adapters.inbound;
 
+import com.alipay.api.AlipayApiException;
+import com.alipay.api.AlipayClient;
 import com.alipay.api.internal.util.AlipaySignature;
 import com.rzou.payment.application.commands.PaymentFailedHandler;
 import com.rzou.payment.application.commands.PaymentPendingHandler;
@@ -8,6 +10,7 @@ import com.rzou.payment.application.commands.UpdatePaymentStatusCommand;
 import com.rzou.payment.common.BaseResponse;
 import com.rzou.payment.common.ErrorCode;
 import com.rzou.payment.common.ResultUtils;
+import com.rzou.payment.infrastructure.AlipayConfig;
 import com.rzou.payment.ports.inbound.UpdatePaymentStatusUseCase;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,15 +33,16 @@ public class PaymentWebhookController {
     @Autowired
     private PaymentPendingHandler paymentPendingHandler;
     @Autowired
-    private UpdatePaymentStatusUseCase updatePaymentStatusUseCase;
+    private AlipayClient alipayClient;
 
-    @Value("${alipay.alipay-public-key}")
+    @Value("${alipay.public-key}")
     private String alipayPublicKey;
 
-    @Value("${alipay.charset:UTF-8}")
+
+    @Value("${alipay.charset}")
     private String charset;
 
-    @Value("${alipay.sign-type:RSA2}")
+    @Value("${alipay.sign-type}")
     private String signType;
 
     /**
@@ -49,11 +53,7 @@ public class PaymentWebhookController {
         Map<String, String[]> requestParams = request.getParameterMap();
         for (String name : requestParams.keySet()) {
             String[] values = requestParams.get(name);
-            String valueStr = "";
-            for (int i = 0; i < values.length; i++) {
-                valueStr = (i == values.length - 1) ? valueStr + values[i]
-                        : valueStr + values[i] + ",";
-            }
+            String valueStr = values.length > 0 ? values[0] : "";
             params.put(name, valueStr);
         }
         return params;
@@ -134,26 +134,6 @@ public class PaymentWebhookController {
         } catch (Exception e) {
             log.error("处理支付宝回调异常", e);
             return "failure";
-        }
-    }
-
-    @PostMapping("/payment-status")
-    public BaseResponse<Boolean> handlePaymentStatusUpdate(
-            @RequestBody UpdatePaymentStatusCommand command) {
-        try {
-            if (command == null || command.getTransactionId() == null) {
-                return ResultUtils.error(ErrorCode.PARAMS_ERROR);
-            }
-
-            boolean result = updatePaymentStatusUseCase.updatePaymentStatus(command);
-            if (result) {
-                return ResultUtils.success(true);
-            } else {
-                return ResultUtils.error(ErrorCode.SYSTEM_ERROR, "更新支付状态失败");
-            }
-        } catch (Exception e) {
-            log.error("更新支付状态异常: {}", command.getTransactionId(), e);
-            return ResultUtils.error(ErrorCode.SYSTEM_ERROR, "系统异常");
         }
     }
 }
