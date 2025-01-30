@@ -3,6 +3,8 @@ package com.rzou.payment.adapters.inbound;
 import com.alibaba.nacos.shaded.com.google.gson.Gson;
 import com.rabbitmq.client.Channel;
 import com.rzou.payment.application.commands.CreatePaymentCommand;
+import com.rzou.payment.domain.events.OrderCreateEvent;
+import com.rzou.payment.domain.valueobj.OrderItem;
 import com.rzou.payment.infrastructure.RabbitMQConfig;
 import com.rzou.payment.ports.inbound.CreatePaymentUseCase;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +15,8 @@ import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.List;
 
 @Slf4j
 @Component
@@ -30,7 +34,15 @@ public class RabbitMQConsumer {
             String messageStr = new String(message.getBody());
             log.info("Received order message: {}", messageStr);
 
-            CreatePaymentCommand command = gson.fromJson(messageStr, CreatePaymentCommand.class);
+            // 解析消息
+            OrderCreateEvent orderCreateEvent = gson.fromJson(messageStr, OrderCreateEvent.class);
+            // 计算订单总金额
+            BigDecimal totalAmount = calculateTotalAmount(orderCreateEvent.getItems());
+            // 转换为支付命令
+            CreatePaymentCommand command = new CreatePaymentCommand();
+            command.setOrderId(orderCreateEvent.getOrderId());
+            command.setAmount(totalAmount);
+            // 创建支付
             boolean result = createPaymentUseCase.createPayment(command);
 
             if (result) {
@@ -52,5 +64,18 @@ public class RabbitMQConsumer {
                 log.error("Error sending NACK: {}", ex.getMessage());
             }
         }
+    }
+
+    /**
+     * 计算订单总金额
+     */
+    private BigDecimal calculateTotalAmount(List<OrderItem> items) {
+        if (items == null || items.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+
+        return items.stream()
+                .map(item -> item.getPrice().multiply(new BigDecimal(item.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 }

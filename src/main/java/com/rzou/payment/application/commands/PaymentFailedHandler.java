@@ -1,6 +1,5 @@
 package com.rzou.payment.application.commands;
 
-import com.rzou.payment.adapters.inbound.AlipayNotifyParam;
 import com.rzou.payment.domain.enums.PaymentStatusEnum;
 import com.rzou.payment.ports.inbound.PaymentStatusUseCase;
 import com.rzou.payment.ports.inbound.UpdatePaymentStatusUseCase;
@@ -19,24 +18,24 @@ public class PaymentFailedHandler implements PaymentStatusUseCase {
     private OrderServiceApi orderServiceApi;
 
     @Override
-    public Boolean handle(AlipayNotifyParam notifyParam) {
+    public Boolean handle(PaymentCommand command) {
         try {
-            UpdatePaymentStatusCommand command = new UpdatePaymentStatusCommand();
-            command.setTransactionId(notifyParam.getOutTradeNo());
-            command.setChannelTransactionId(notifyParam.getTradeNo());
-            command.setTransactionStatus(PaymentStatusEnum.FAILED);
-            command.setErrorCode("TRADE_CLOSED");
-            command.setErrorMsg("交易关闭");
+            UpdatePaymentStatusCommand updatePaymentStatusCommand = new UpdatePaymentStatusCommand();
+            updatePaymentStatusCommand.setTransactionId(command.getTransactionId());
+            updatePaymentStatusCommand.setChannelTransactionId(command.getChannelTransactionId());
+            updatePaymentStatusCommand.setTransactionStatus(PaymentStatusEnum.FAILED);
+            updatePaymentStatusCommand.setErrorCode("TRADE_CLOSED");
+            updatePaymentStatusCommand.setErrorMsg("交易关闭");
 
             // 更新支付状态
-            boolean updateSuccess = updatePaymentStatusUseCase.updatePaymentStatus(command);
+            boolean updateSuccess = updatePaymentStatusUseCase.updatePaymentStatus(updatePaymentStatusCommand);
             if (!updateSuccess) {
-                log.error("更新支付状态失败: {}", notifyParam.getOutTradeNo());
+                log.error("更新支付状态失败: {}", command.getTransactionId());
                 return false;
             }
 
             // 更新订单状态
-            return orderServiceApi.updateOrderStatus(notifyParam.getOutTradeNo(), 2);
+            return orderServiceApi.updateOrderStatus(command.getTransactionId(), 2);
         } catch (Exception e) {
             log.error("处理支付失败异常", e);
             return false;

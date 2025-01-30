@@ -1,17 +1,8 @@
 package com.rzou.payment.adapters.inbound;
 
-import com.alipay.api.AlipayApiException;
 import com.alipay.api.AlipayClient;
 import com.alipay.api.internal.util.AlipaySignature;
-import com.rzou.payment.application.commands.PaymentFailedHandler;
-import com.rzou.payment.application.commands.PaymentPendingHandler;
-import com.rzou.payment.application.commands.PaymentSuccessHandler;
-import com.rzou.payment.application.commands.UpdatePaymentStatusCommand;
-import com.rzou.payment.common.BaseResponse;
-import com.rzou.payment.common.ErrorCode;
-import com.rzou.payment.common.ResultUtils;
-import com.rzou.payment.infrastructure.AlipayConfig;
-import com.rzou.payment.ports.inbound.UpdatePaymentStatusUseCase;
+import com.rzou.payment.application.commands.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,7 +28,6 @@ public class PaymentWebhookController {
 
     @Value("${alipay.public-key}")
     private String alipayPublicKey;
-
 
     @Value("${alipay.charset}")
     private String charset;
@@ -89,8 +79,17 @@ public class PaymentWebhookController {
         return notifyParam;
     }
 
+    private PaymentCommand convertToPaymentCommand(AlipayNotifyParam notifyParam) {
+        PaymentCommand command = new PaymentCommand();
+        command.setTransactionId(notifyParam.getOutTradeNo());
+        command.setChannelTransactionId(notifyParam.getTradeNo());
+        command.setTradeStatus(notifyParam.getTradeStatus());
+        command.setAmount(notifyParam.getTotalAmount());
+        return command;
+    }
+
     @PostMapping("/alipay/notify")
-    public String handleAlipayNotify(HttpServletRequest request) {
+    public Boolean handleAlipayNotify(HttpServletRequest request) {
         try {
             // 1. 解析支付宝参数
             Map<String, String> params = parseAlipayParams(request);
@@ -99,41 +98,42 @@ public class PaymentWebhookController {
             // 2. 验证签名
             if (!verifyAlipaySignature(params)) {
                 log.error("支付宝签名验证失败");
-                return "failure";
+                return false;
             }
 
             // 3. 构造回调参数对象
             AlipayNotifyParam notifyParam = buildNotifyParam(params);
+            PaymentCommand command = convertToPaymentCommand(notifyParam);
 
             // 4. 根据交易状态选择对应的处理器
             boolean success;
             switch (notifyParam.getTradeStatus()) {
                 case "TRADE_SUCCESS":
                 case "TRADE_FINISHED":
-                    success = paymentSuccessHandler.handle(notifyParam);
+                    success = paymentSuccessHandler.handle(command);
                     break;
 
                 case "TRADE_CLOSED":
-                    success = paymentFailedHandler.handle(notifyParam);
+                    success = paymentFailedHandler.handle(command);
                     break;
 
                 case "WAIT_BUYER_PAY":
-                    success = paymentPendingHandler.handle(notifyParam);
+                    success = paymentPendingHandler.handle(command);
                     break;
 
                 default:
                     log.warn("未处理的交易状态: {}", notifyParam.getTradeStatus());
-                    return "failure";
+                    return false;
             }
 
             if (!success) {
                 log.error("处理支付宝回调失败: {}", notifyParam.getOutTradeNo());
             }
-            return success ? "success" : "failure";
+            return success;
 
         } catch (Exception e) {
             log.error("处理支付宝回调异常", e);
-            return "failure";
+            return false;
         }
     }
 }

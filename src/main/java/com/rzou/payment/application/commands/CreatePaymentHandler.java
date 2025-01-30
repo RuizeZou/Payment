@@ -2,7 +2,6 @@ package com.rzou.payment.application.commands;
 
 import com.google.gson.Gson;
 import com.rzou.payment.adapters.inbound.ChannelProcessResponse;
-import com.rzou.payment.common.BaseResponse;
 import com.rzou.payment.domain.entities.Payment;
 import com.rzou.payment.domain.enums.PaymentStatusEnum;
 import com.rzou.payment.domain.enums.TransactionTypeEnum;
@@ -14,8 +13,8 @@ import com.rzou.payment.ports.outbound.PaymentRepositoryPort;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.rpc.RpcContext;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -31,9 +30,9 @@ public class CreatePaymentHandler implements CreatePaymentUseCase {
     private OrderServiceApi orderServiceApi;
     @Autowired
     private PaymentChannelApi paymentChannelApi;
-    @Qualifier("eventPublisherImpl")//这个不需要qualifier吧，publisher只有一个实现吧
 
     @Override
+    @Transactional
     public Boolean createPayment(CreatePaymentCommand createPaymentCommand) {
         try {
             // 1. 转换支付命令到值对象
@@ -102,8 +101,22 @@ public class CreatePaymentHandler implements CreatePaymentUseCase {
             Boolean updateRes = orderServiceApi.updatePaymentLink(payment.getOrderId(), paymentLink);
             if (updateRes == null || !updateRes) {
                 log.error("更新订单支付链接失败: {}", payment.getOrderId());
+                try {
+                    // 1. 调用支付渠道撤销支付
+                    String cancelRes = paymentChannelApi.cancelPayment(
+                            payment.getOrderId()
+                    );
+                    ChannelProcessResponse res = gson.fromJson(cancelRes, ChannelProcessResponse.class);
+                    if (!res.isSuccess()) {
+                        log.error("取消支付失败: {}", payment.getOrderId());
+                    }
+
+                    // 2. 删除支付记录
+                    paymentRepositoryPort.deleteById(payment.getTransactionId());
+                } catch (Exception ex){
+                    log.error("支付补偿失败: {}", payment.getOrderId(), ex);
+                }
                 return false;
-                //这一步是否也要cancel掉支付
             }
 
             // 返回true表示处理成功,MQ Consumer可以ACK消息

@@ -7,11 +7,13 @@ import com.rzou.payment.infrastructure.RabbitMQConfig;
 import com.rzou.payment.ports.outbound.EventPublisherPort;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
 
 @Slf4j
 @Service
+@Primary
 public class RabbitMQPublisher implements EventPublisherPort {
 
     private final RabbitTemplate rabbitTemplate;
