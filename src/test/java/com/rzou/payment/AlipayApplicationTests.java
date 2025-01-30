@@ -11,7 +11,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import java.math.BigDecimal;
 
-@SpringBootTest
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 class AlipayApplicationTests {
     private final Gson gson = new Gson();
     @Autowired
@@ -20,10 +20,11 @@ class AlipayApplicationTests {
     private AlipayConfig alipayConfig;
 
     @Test
-    void testPayment() {
-        String channelResponse = paymentChannelApi.processPayment("123456789", new BigDecimal("100.00"), "Test Payment");
+    void testPayment() throws InterruptedException {
+        String channelResponse = paymentChannelApi.processPayment("1234", new BigDecimal("100.00"), "Test Payment");
         ChannelProcessResponse channelRes = gson.fromJson(channelResponse, ChannelProcessResponse.class);
         System.out.println(channelRes);
+        Thread.sleep(300_000);
     }
 
 }

@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -89,7 +89,7 @@ public class PaymentWebhookController {
     }
 
     @PostMapping("/alipay/notify")
-    public Boolean handleAlipayNotify(HttpServletRequest request) {
+    public String handleAlipayNotify(HttpServletRequest request) {
         try {
             // 1. 解析支付宝参数
             Map<String, String> params = parseAlipayParams(request);
@@ -98,42 +98,48 @@ public class PaymentWebhookController {
             // 2. 验证签名
             if (!verifyAlipaySignature(params)) {
                 log.error("支付宝签名验证失败");
-                return false;
+                // 签名不正确，返回 "failure"（或其他错误标识）
+                return "failure";
             }
 
             // 3. 构造回调参数对象
             AlipayNotifyParam notifyParam = buildNotifyParam(params);
             PaymentCommand command = convertToPaymentCommand(notifyParam);
 
-            // 4. 根据交易状态选择对应的处理器
+            // 4. 根据交易状态调用处理器
             boolean success;
             switch (notifyParam.getTradeStatus()) {
                 case "TRADE_SUCCESS":
                 case "TRADE_FINISHED":
+                    // 表示支付成功或交易完结
                     success = paymentSuccessHandler.handle(command);
                     break;
-
                 case "TRADE_CLOSED":
+                    // 表示交易关闭
                     success = paymentFailedHandler.handle(command);
                     break;
-
                 case "WAIT_BUYER_PAY":
+                    // 表示待支付
                     success = paymentPendingHandler.handle(command);
                     break;
-
                 default:
                     log.warn("未处理的交易状态: {}", notifyParam.getTradeStatus());
-                    return false;
+                    // 不认识的状态，可以返回 "failure"
+                    return "failure";
             }
 
             if (!success) {
                 log.error("处理支付宝回调失败: {}", notifyParam.getOutTradeNo());
+                return "failure";
             }
-            return success;
+
+            // 如果一切执行成功，则返回 "success" 告知支付宝停止重试
+            return "success";
 
         } catch (Exception e) {
             log.error("处理支付宝回调异常", e);
-            return false;
+            // 出现异常时，也返回 "failure"
+            return "failure";
         }
     }
 }
