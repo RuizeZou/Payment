@@ -1,7 +1,7 @@
 package com.rzou.payment.application.commands;
 
 import com.rzou.payment.domain.enums.PaymentStatusEnum;
-import com.rzou.payment.ports.inbound.PaymentStatusUseCase;
+import com.rzou.payment.ports.inbound.HandlePaymentPendingUseCase;
 import com.rzou.payment.ports.inbound.UpdatePaymentStatusUseCase;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
-public class PaymentPendingHandler implements PaymentStatusUseCase {
+public class PaymentPendingHandler implements HandlePaymentPendingUseCase {
 
     @Autowired
     private UpdatePaymentStatusUseCase updatePaymentStatusUseCase;

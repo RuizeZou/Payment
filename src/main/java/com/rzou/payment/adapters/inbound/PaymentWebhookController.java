@@ -3,6 +3,9 @@ package com.rzou.payment.adapters.inbound;
 import com.alipay.api.AlipayClient;
 import com.alipay.api.internal.util.AlipaySignature;
 import com.rzou.payment.application.commands.*;
+import com.rzou.payment.ports.inbound.HandlePaymentFailedUseCase;
+import com.rzou.payment.ports.inbound.HandlePaymentPendingUseCase;
+import com.rzou.payment.ports.inbound.HandlePaymentSuccessUseCase;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,11 +21,11 @@ import java.util.Map;
 public class PaymentWebhookController {
 
     @Autowired
-    private PaymentSuccessHandler paymentSuccessHandler;
+    private HandlePaymentSuccessUseCase paymentSuccessHandler;
     @Autowired
-    private PaymentFailedHandler paymentFailedHandler;
+    private HandlePaymentFailedUseCase paymentFailedHandler;
     @Autowired
-    private PaymentPendingHandler paymentPendingHandler;
+    private HandlePaymentPendingUseCase paymentPendingHandler;
     @Autowired
     private AlipayClient alipayClient;
 
